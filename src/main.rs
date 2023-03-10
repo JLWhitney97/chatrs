@@ -18,16 +18,21 @@ async fn main() {
             println!("Welcome to ChatCLI-rs!\n");
         }
         Err(_) => {
-            println!("Error: You must set OPENAI_API_KEY.  Please set this env variable and try again.");
+            println!("Error: You must set OPENAI_API_KEY.  Please set this env variable and try again.\n");
             return;
         }
     };
 
     let cli = ChatCLIArgs::parse();
 
-    let request = chat_loop::run_chat_loop(MODEL, SYSTEM_MESSAGE).await;
+    let chat_loop_args = match &cli.file {
+        Some(file_name) => chat_loop::ChatArgs::PreviousChat(conversations::input_request(&file_name)),
+        None => chat_loop::ChatArgs::NewChat(String::from(MODEL), String::from(SYSTEM_MESSAGE)),
+    };
 
-    match cli.output {
+    let request = chat_loop::run_chat_loop(chat_loop_args).await;
+
+    match &cli.file {
         Some(file_name) => {
             conversations::output_request(&request, &file_name);
         },

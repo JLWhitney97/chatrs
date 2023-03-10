@@ -1,23 +1,33 @@
 use async_openai::{
-    types::{ChatCompletionRequestMessageArgs, CreateChatCompletionRequestArgs, CreateChatCompletionRequest, Role},
+    types::{
+        ChatCompletionRequestMessageArgs, CreateChatCompletionRequest,
+        CreateChatCompletionRequestArgs, Role,
+    },
     Client,
 };
 use rustyline::{error::ReadlineError, DefaultEditor};
 
-pub async fn run_chat_loop(model: &str, system_message: &str) -> CreateChatCompletionRequest {
+pub enum ChatArgs {
+    PreviousChat(CreateChatCompletionRequest),
+    NewChat(String, String),
+}
+
+pub async fn run_chat_loop(chat_args: ChatArgs) -> CreateChatCompletionRequest {
     //Create OPENAI Api Client from env variable OPENAI_API_KEY
     let client = Client::new();
 
-    //Build ChatCompletionRequest object with the default chat message.
-    let mut request = CreateChatCompletionRequestArgs::default()
-        .model(model)
-        .messages([ChatCompletionRequestMessageArgs::default()
-            .role(Role::System)
-            .content(system_message)
+    let mut request = match chat_args {
+        ChatArgs::PreviousChat(req) => req,
+        ChatArgs::NewChat(model, system_message) => CreateChatCompletionRequestArgs::default()
+            .model(model)
+            .messages([ChatCompletionRequestMessageArgs::default()
+                .role(Role::System)
+                .content(system_message)
+                .build()
+                .expect("Default Paramaters always provided")])
             .build()
-            .expect("Default Paramaters always provided")])
-        .build()
-        .expect("Default Paramaters always provided");
+            .expect("Default Paramaters always provided"),
+    };
 
     //Create Rustyline Editor
     let mut rl = match DefaultEditor::new() {
@@ -33,7 +43,7 @@ pub async fn run_chat_loop(model: &str, system_message: &str) -> CreateChatCompl
         let readline = match rl.readline("\n<   You   > ") {
             Ok(line) => line,
             Err(ReadlineError::Interrupted) => {
-                println!("Ending Conversation");
+                println!("\nEnding Conversation");
                 return request;
             }
             Err(err) => {
