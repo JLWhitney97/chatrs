@@ -5,5 +5,5 @@ use clap::Parser;
 pub struct ChatCLIArgs {
     ///
     #[arg(short, long)]
-    pub file: Option<String>,
+    pub resume: Option<String>,
 }
