@@ -24,19 +24,39 @@ async fn main() {
     };
 
     let cli = ChatCLIArgs::parse();
-
-    let chat_loop_args = match &cli.resume {
-        Some(file_name) => chat_loop::ChatArgs::PreviousChat(conversations::input_request(&file_name)),
-        None => chat_loop::ChatArgs::NewChat(String::from(MODEL), String::from(SYSTEM_MESSAGE)),
+    let chat_loop_args = match &cli.action {
+        args::Action::New => {
+            chat_loop::ChatArgs::NewChat(String::from(MODEL), String::from(SYSTEM_MESSAGE))
+        }
+        args::Action::Resume => match &cli.file {
+            Some(file_name) => {
+                chat_loop::ChatArgs::PreviousChat(conversations::read_request(&file_name))
+            }
+            None => {
+                println!("\n Please provide a file name with the -f command line option.");
+                return;
+            }
+        },
+        args::Action::Quick => {
+            chat_loop::ChatArgs::NewChat(String::from(MODEL), String::from(SYSTEM_MESSAGE))
+        }
     };
 
     let request = chat_loop::run_chat_loop(chat_loop_args).await;
 
-    match &cli.resume {
-        Some(file_name) => {
-            conversations::output_request(&request, &file_name);
-        },
-        None => println!("\n Discarding Chat \n"),
+    match &cli.action {
+        args::Action::New => {
+            //todo## Prompt to save chat.
+        }
+        args::Action::Resume => {
+            conversations::write_request(
+                &request,
+                &cli.file
+                    .expect("Program should have returned if file isn't provided on resume."),
+            );
+        }
+        args::Action::Quick => {
+            println!("\n Discarding coversation \n");
+        }
     };
-
 }

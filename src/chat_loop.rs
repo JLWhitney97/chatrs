@@ -24,9 +24,9 @@ pub async fn run_chat_loop(chat_args: ChatArgs) -> CreateChatCompletionRequest {
                 .role(Role::System)
                 .content(system_message)
                 .build()
-                .expect("Default Paramaters always provided")])
+                .expect("Default values should always provided")])
             .build()
-            .expect("Default Paramaters always provided"),
+            .expect("Default values should always provided"),
     };
 
     //Create Rustyline Editor
@@ -59,11 +59,11 @@ pub async fn run_chat_loop(chat_args: ChatArgs) -> CreateChatCompletionRequest {
                 .role(Role::User)
                 .content(readline)
                 .build()
-                .expect("Values are always provided."),
+                .expect("Default Values should always be provided."),
         );
 
         //Query response
-        let response = match client.chat().create(request.to_owned()).await {
+        let response = match client.chat().create(request.clone()).await {
             Ok(response) => response,
             Err(error) => {
                 println!(
